@@ -1,0 +1,32 @@
+--------BD----------
+
+*Recursos da linguagem*
+
+--Estruturas em blocos--
+
+DECLARE: declaração de variáveis de memória - opcional.
+
+BEGIN: instruções de funcionamento - processamento, ifs.
+
+EXCEPTION: tratamento de execeções - opcional.
+
+END: finalização do bloco.
+
+------------------------
+
+--atribuindo valor a var--
+
+v1 number(2) :=10;
+Nome varchar2(10) := 'Marcel';
+
+------------------------
+
+--Herança de tipo e tamanho--
+
+alivando estresse, valor de v1 é atribuido a v2, ent sempre que vc alterar v1, automaticamente
+v2 será alterado junto.
+
+v1 number(2);
+v2 v1%type;
+
+------------------------
