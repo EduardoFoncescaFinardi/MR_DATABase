@@ -1,0 +1,8 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<OSDM_Design class="oracle.dbtools.crest.model.design.Design" name="BEACHREPORT" id="CE0485D1-B34C-B641-9175-148878E1B1D1" version="3.5">
+<createdBy>logonrmlocal</createdBy>
+<createdTime>2024-05-29 11:18:49 UTC</createdTime>
+<ownerDesignName>BEACHREPORT</ownerDesignName>
+<capitalNames>false</capitalNames>
+<designId>CE0485D1-B34C-B641-9175-148878E1B1D1</designId>
+</OSDM_Design>
