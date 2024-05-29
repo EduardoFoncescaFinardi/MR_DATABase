@@ -19,7 +19,7 @@ DROP SEQUENCE SEQ_LOG_ERROS;
 ---------------------------------------------------------
 CREATE TABLE T_BR_USUARIO(
     id_usuario NUMBER,
-    nr_cpf NUMBER,
+    nr_cpf NUMBER UNIQUE,
     varchar_senha VARCHAR(50),
     CONSTRAINT T_TB_USUARIO_PK PRIMARY KEY (id_usuario)
 );
@@ -132,6 +132,9 @@ CREATE SEQUENCE SEQ_LOG_ERROS
   
 ----------------------------------------------------------------------------------
 --------------------------PROCEDURE - CARGA DE DADOS------------------------------
+set verify off
+set serveroutput on
+
 ---T_BR_LOG_ERRO
 CREATE OR REPLACE PROCEDURE PRC_INSERIR_LOG_ERRO (
     p_nome_procedure IN VARCHAR2,
@@ -148,9 +151,21 @@ BEGIN
     COMMIT;
 EXCEPTION
     WHEN OTHERS THEN
-        NULL; -- Evitar loop infinito em caso de erro na inserção do log
+        NULL; 
 END;
+
+BEGIN
+    PRC_INSERIR_LOG_ERRO(
+        p_nome_procedure => 'PRC_INSERIR_USUARIO',
+        p_nome_usuario => USER,
+        p_codigo_erro => -20001,
+        p_mensagem_erro => 'Erro de teste'
+    );
+END;
+
+select * from T_BR_LOG_ERROS;
 ---
+
 
 ---T_BR_USUARIO
 CREATE OR REPLACE PROCEDURE PRC_INSERIR_USUARIO (
@@ -172,3 +187,105 @@ EXCEPTION
         PRC_INSERIR_LOG_ERRO('PRC_INSERIR_USUARIO', USER, SQLCODE, SQLERRM);
         RAISE;
 END;
+----
+---- teste válido
+BEGIN
+    PRC_INSERIR_USUARIO(p_nr_cpf => 12345678901, p_varchar_senha => 'senha123');
+END;
+----
+---- teste EXCEPTION
+BEGIN
+    -- Primeiro, insere um usuário válido
+    PRC_INSERIR_USUARIO(p_nr_cpf => 12345678901, p_varchar_senha => 'senha123');
+    -- Tenta inserir o mesmo CPF novamente para gerar um erro de duplicidade
+    PRC_INSERIR_USUARIO(p_nr_cpf => 12345678901, p_varchar_senha => 'senha124');
+END;
+
+---- TESTE EXTRA
+SELECT object_name, status
+FROM user_objects
+WHERE object_type = 'PROCEDURE'
+AND object_name = 'PRC_INSERIR_LOG_ERRO';
+----
+----
+select * from T_BR_USUARIO;
+select * from T_BR_LOG_ERROS;
+---
+
+
+--- T_BR_ENDERCO_USUSARIO
+CREATE OR REPLACE PROCEDURE PRC_INSERIR_ENDERECO_USUARIO (
+    p_nr_cep IN NUMBER,
+    p_id_usuario IN NUMBER
+) AS
+BEGIN
+    INSERT INTO T_BR_ENDERECO_USUARIO (
+        id_endereco, nr_cep, id_usuario
+    ) VALUES (
+        SEQ_ENDERECO_USUARIO.NEXTVAL, p_nr_cep, p_id_usuario
+    );
+    COMMIT;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        PRC_INSERIR_LOG_ERRO('PRC_INSERIR_ENDERECO_USUARIO', USER, SQLCODE, SQLERRM);
+        RAISE_APPLICATION_ERROR(-20002, 'Erro: Usuário não encontrado.');
+    WHEN OTHERS THEN
+        PRC_INSERIR_LOG_ERRO('PRC_INSERIR_ENDERECO_USUARIO', USER, SQLCODE, SQLERRM);
+        RAISE;
+END;
+----
+---- teste válido
+BEGIN
+    PRC_INSERIR_ENDERECO_USUARIO(p_nr_cep => 12345678, p_id_usuario => 1);
+END;
+----
+---- teste EXCEPTION
+BEGIN
+    -- Tenta inserir um endereço para um usuário que não existe
+    PRC_INSERIR_ENDERECO_USUARIO(p_nr_cep => 12345678, p_id_usuario => 9999); -- id_usuario 9999 não existe
+END;
+----
+
+select * from T_BR_ENDERECO_USUARIO;
+select * from T_BR_LOG_ERROS;
+----
+
+
+---- T_BR_TELEFONE_USUSARIO
+CREATE OR REPLACE PROCEDURE PRC_INSERIR_TELEFONE_USUARIO (
+    p_nr_ddd IN NUMBER,
+    p_nr_telefone IN NUMBER,
+    p_id_usuario IN NUMBER
+) AS
+BEGIN
+    INSERT INTO T_BR_TELEFONE_USUARIO (
+        id_telefone, nr_ddd, nr_telefone, id_usuario
+    ) VALUES (
+        SEQ_TELEFONE_USUARIO.NEXTVAL, p_nr_ddd, p_nr_telefone, p_id_usuario
+    );
+    COMMIT;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        PRC_INSERIR_LOG_ERRO('PRC_INSERIR_TELEFONE_USUARIO', USER, SQLCODE, SQLERRM);
+        RAISE_APPLICATION_ERROR(-20002, 'Erro: Usuário não encontrado.');
+    WHEN OTHERS THEN
+        PRC_INSERIR_LOG_ERRO('PRC_INSERIR_TELEFONE_USUARIO', USER, SQLCODE, SQLERRM);
+        RAISE;
+END;
+----
+---- teste válido
+BEGIN
+    PRC_INSERIR_TELEFONE_USUARIO(p_nr_ddd => 11, p_nr_telefone => 987654321, p_id_usuario => 1);
+END;
+----
+---- teste EXCEPTION
+BEGIN
+    PRC_INSERIR_TELEFONE_USUARIO(p_nr_ddd => 11, p_nr_telefone => 987654321, p_id_usuario => 9999); -- id_usuario 9999 não existe
+END;
+
+select * from T_BR_TELEFONE_USUARIO;
+select * from T_BR_LOG_ERROS;
+----
+
+
+
