@@ -238,7 +238,7 @@ END;
 ----
 ---- teste EXCEPTION
 BEGIN
-    PRC_INSERIR_ENDERECO_USUARIO(p_nr_cep => 12345678, p_id_usuario => 9999); -- id_usuario 9999 não existe
+    PRC_INSERIR_ENDERECO_USUARIO(p_nr_cep => 12345678, p_id_usuario => 9999); 
 END;
 ----
 select * from T_BR_ENDERECO_USUARIO;
@@ -275,7 +275,7 @@ END;
 ----
 ---- teste EXCEPTION
 BEGIN
-    PRC_INSERIR_TELEFONE_USUARIO(p_nr_ddd => 11, p_nr_telefone => 987654321, p_id_usuario => 9999); -- id_usuario 9999 não existe
+    PRC_INSERIR_TELEFONE_USUARIO(p_nr_ddd => 11, p_nr_telefone => 987654321, p_id_usuario => 9999); 
 END;
 --- teste EXTRA
 SELECT object_name, status
