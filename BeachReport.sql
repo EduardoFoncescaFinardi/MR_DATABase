@@ -48,7 +48,7 @@ CREATE SEQUENCE SEQ_ENDERECO_USUARIO
 CREATE TABLE T_BR_TELEFONE_USUARIO(
     id_telefone NUMBER,
     nr_ddd NUMBER,
-    nr_telefone NUMBER,
+    nr_telefone NUMBER UNIQUE,
     id_usuario NUMBER,
     CONSTRAINT T_BR_TELEFONE_USUARIO_PK PRIMARY KEY (id_telefone),
     CONSTRAINT T_BR_TELEFONE_USUARIO_USUARIO_FK FOREIGN KEY (id_usuario) REFERENCES T_BR_USUARIO(id_usuario)
@@ -63,7 +63,7 @@ CREATE SEQUENCE SEQ_TELEFONE_USUARIO
 ----------------------------------------------------------
 CREATE TABLE T_BR_EMAIL_USUARIO(
     id_email_contato NUMBER,
-    varchar_email VARCHAR(80),
+    varchar_email VARCHAR(80) UNIQUE,
     id_usuario NUMBER,
     CONSTRAINT T_BR_EMAIL_USUARIO_PK PRIMARY KEY (id_email_contato),
     CONSTRAINT T_BR_EMAIL_USUARIO_USUARIO_FK FOREIGN KEY (id_usuario) REFERENCES T_BR_USUARIO(id_usuario)   
@@ -129,7 +129,6 @@ CREATE SEQUENCE SEQ_LOG_ERROS
   MINVALUE 0
   MAXVALUE 10000
   NOCYCLE;
-  
 ----------------------------------------------------------------------------------
 --------------------------PROCEDURE - CARGA DE DADOS------------------------------
 set verify off
@@ -183,6 +182,9 @@ EXCEPTION
     WHEN DUP_VAL_ON_INDEX THEN
         PRC_INSERIR_LOG_ERRO('PRC_INSERIR_USUARIO', USER, SQLCODE, SQLERRM);
         RAISE_APPLICATION_ERROR(-20001, 'Erro: CPF duplicado.');
+    WHEN INVALID_NUMBER THEN
+        PRC_INSERIR_LOG_ERRO('PRC_INSERIR_USUARIO', USER, SQLCODE, SQLERRM);
+        RAISE_APPLICATION_ERROR(-20004, 'Erro: Número inválido fornecido.');
     WHEN OTHERS THEN
         PRC_INSERIR_LOG_ERRO('PRC_INSERIR_USUARIO', USER, SQLCODE, SQLERRM);
         RAISE;
@@ -225,7 +227,10 @@ BEGIN
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
         PRC_INSERIR_LOG_ERRO('PRC_INSERIR_ENDERECO_USUARIO', USER, SQLCODE, SQLERRM);
-        RAISE_APPLICATION_ERROR(-20002, 'Erro: Usuário não encontrado.');
+        RAISE_APPLICATION_ERROR(-20002, 'Erro: Usuário não encontrado.'); 
+    WHEN VALUE_ERROR THEN
+        PRC_INSERIR_LOG_ERRO('PRC_INSERIR_ENDERECO_USUARIO', USER, SQLCODE, SQLERRM);
+        RAISE_APPLICATION_ERROR(-20003, 'Erro: Valor inválido fornecido.');
     WHEN OTHERS THEN
         PRC_INSERIR_LOG_ERRO('PRC_INSERIR_ENDERECO_USUARIO', USER, SQLCODE, SQLERRM);
         RAISE;
@@ -262,6 +267,9 @@ BEGIN
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
         PRC_INSERIR_LOG_ERRO('PRC_INSERIR_TELEFONE_USUARIO', USER, SQLCODE, SQLERRM);
+        RAISE_APPLICATION_ERROR(-20002, 'Erro: Usuário não encontrado.');
+    WHEN DUP_VAL_ON_INDEX THEN
+        PRC_INSERIR_LOG_ERRO('PRC_INSERIR_TELFONE_USUARIO', USER, SQLCODE, SQLERRM);
         RAISE_APPLICATION_ERROR(-20002, 'Erro: Usuário não encontrado.');
     WHEN OTHERS THEN
         PRC_INSERIR_LOG_ERRO('PRC_INSERIR_TELEFONE_USUARIO', USER, SQLCODE, SQLERRM);
@@ -305,17 +313,18 @@ EXCEPTION
     WHEN NO_DATA_FOUND THEN
         PRC_INSERIR_LOG_ERRO('PRC_INSERIR_EMAIL_USUARIO', USER, SQLCODE, SQLERRM);
         RAISE_APPLICATION_ERROR(-20002, 'Erro: Usuário não encontrado.');
+    WHEN DUP_VAL_ON_INDEX THEN
+        PRC_INSERIR_LOG_ERRO('PRC_INSERIR_EMAIL_USUARIO', USER, SQLCODE, SQLERRM);
+        RAISE_APPLICATION_ERROR(-20002, 'Erro: Usuário não encontrado.');        
     WHEN OTHERS THEN
         PRC_INSERIR_LOG_ERRO('PRC_INSERIR_EMAIL_USUARIO', USER, SQLCODE, SQLERRM);
         RAISE;
 END;
-
 ----
 ---- teste válido
 BEGIN
     PRC_INSERIR_EMAIL_USUARIO(p_varchar_email => 'usuario@exemplo.com', p_id_usuario => 1);
 END;
-
 ----
 ---- teste EXCEPTION
 BEGIN
@@ -347,6 +356,9 @@ EXCEPTION
     WHEN NO_DATA_FOUND THEN
         PRC_INSERIR_LOG_ERRO('PRC_INSERIR_NIVEL_CONFIABILIDADE', USER, SQLCODE, SQLERRM);
         RAISE_APPLICATION_ERROR(-20002, 'Erro: Usuário não encontrado.');
+    WHEN ZERO_DIVIDE THEN
+        PRC_INSERIR_LOG_ERRO('PRC_INSERIR_NIVEL_CONFIABILIDADE', USER, SQLCODE, SQLERRM);
+        RAISE_APPLICATION_ERROR(-20005, 'Erro: Divisão por zero.');
     WHEN OTHERS THEN
         PRC_INSERIR_LOG_ERRO('PRC_INSERIR_NIVEL_CONFIABILIDADE', USER, SQLCODE, SQLERRM);
         RAISE;
@@ -359,7 +371,7 @@ END;
 ----
 ---- teste EXCEPTION
 BEGIN
-    PRC_INSERIR_NIVEL_CONFIABILIDADE(p_numeric_nivel_confiabilidade => 5, p_id_usuario => 9999); -- id_usuario 9999 não existe
+    PRC_INSERIR_NIVEL_CONFIABILIDADE(p_numeric_nivel_confiabilidade => 5, p_id_usuario => 9999); 
 END;
 ---- teste EXTRA
 
@@ -393,6 +405,9 @@ EXCEPTION
     WHEN NO_DATA_FOUND THEN
         PRC_INSERIR_LOG_ERRO('PRC_INSERIR_RELATO', USER, SQLCODE, SQLERRM);
         RAISE_APPLICATION_ERROR(-20002, 'Erro: Usuário não encontrado.');
+    WHEN TOO_MANY_ROWS THEN
+        PRC_INSERIR_LOG_ERRO('PRC_INSERIR_RELATO', USER, SQLCODE, SQLERRM);
+        RAISE_APPLICATION_ERROR(-20006, 'Erro: Subconsulta retornou mais de uma linha.');
     WHEN OTHERS THEN
         PRC_INSERIR_LOG_ERRO('PRC_INSERIR_RELATO', USER, SQLCODE, SQLERRM);
         RAISE;
@@ -457,6 +472,98 @@ select * from T_BR_LOG_ERROS;
 --------------------------BLOCOS ANÔNIMOS - CURSOR------------------------------
 set verify off
 set serveroutput on
+--------APAGUE OS DADOS PARA NÃO DAR ERRO NOS INSERTS!!!!!----------------------
+-----------URGENTE!!!!!!!!!!!!!!!!!!!!!!!!!-------------------------------------
+DELETE FROM T_BR_LOG_ERROS;
+
+DELETE FROM T_BR_RELATO;
+
+DELETE FROM T_BR_NIVEL_CONFIABILIDADE;
+
+DELETE FROM T_BR_EMAIL_USUARIO;
+
+DELETE FROM T_BR_TELEFONE_USUARIO;
+
+DELETE FROM T_BR_ENDERECO_USUARIO;
+
+DELETE FROM T_BR_USUARIO;
+------INSERTS PARA VISUALIZAÇÃO--------------
+INSERT INTO T_BR_USUARIO (id_usuario, nr_cpf, varchar_senha) VALUES (1, 12345678901, 'senha1');
+INSERT INTO T_BR_USUARIO (id_usuario, nr_cpf, varchar_senha) VALUES (2, 23456789012, 'senha2');
+INSERT INTO T_BR_USUARIO (id_usuario, nr_cpf, varchar_senha) VALUES (3, 34567890123, 'senha3');
+INSERT INTO T_BR_USUARIO (id_usuario, nr_cpf, varchar_senha) VALUES (4, 45678901234, 'senha4');
+INSERT INTO T_BR_USUARIO (id_usuario, nr_cpf, varchar_senha) VALUES (5, 56789012345, 'senha5');
+INSERT INTO T_BR_USUARIO (id_usuario, nr_cpf, varchar_senha) VALUES (6, 67890123456, 'senha6');
+INSERT INTO T_BR_USUARIO (id_usuario, nr_cpf, varchar_senha) VALUES (7, 78901234567, 'senha7');
+INSERT INTO T_BR_USUARIO (id_usuario, nr_cpf, varchar_senha) VALUES (8, 89012345678, 'senha8');
+INSERT INTO T_BR_USUARIO (id_usuario, nr_cpf, varchar_senha) VALUES (9, 90123456789, 'senha9');
+INSERT INTO T_BR_USUARIO (id_usuario, nr_cpf, varchar_senha) VALUES (10, 12345678910, 'senha10');
+--------------------------------------------------------------------------------
+INSERT INTO T_BR_ENDERECO_USUARIO (id_endereco, nr_cep, id_usuario) VALUES (1, 12345678, 1);
+INSERT INTO T_BR_ENDERECO_USUARIO (id_endereco, nr_cep, id_usuario) VALUES (2, 23456789, 2);
+INSERT INTO T_BR_ENDERECO_USUARIO (id_endereco, nr_cep, id_usuario) VALUES (3, 34567890, 3);
+INSERT INTO T_BR_ENDERECO_USUARIO (id_endereco, nr_cep, id_usuario) VALUES (4, 45678901, 4);
+INSERT INTO T_BR_ENDERECO_USUARIO (id_endereco, nr_cep, id_usuario) VALUES (5, 56789012, 5);
+INSERT INTO T_BR_ENDERECO_USUARIO (id_endereco, nr_cep, id_usuario) VALUES (6, 67890123, 6);
+INSERT INTO T_BR_ENDERECO_USUARIO (id_endereco, nr_cep, id_usuario) VALUES (7, 78901234, 7);
+INSERT INTO T_BR_ENDERECO_USUARIO (id_endereco, nr_cep, id_usuario) VALUES (8, 89012345, 8);
+INSERT INTO T_BR_ENDERECO_USUARIO (id_endereco, nr_cep, id_usuario) VALUES (9, 90123456, 9);
+INSERT INTO T_BR_ENDERECO_USUARIO (id_endereco, nr_cep, id_usuario) VALUES (10, 12345678, 10);
+--------------------------------------------------------------------------------
+INSERT INTO T_BR_TELEFONE_USUARIO (id_telefone, nr_ddd, nr_telefone, id_usuario) VALUES (1, 11, 912345678, 1);
+INSERT INTO T_BR_TELEFONE_USUARIO (id_telefone, nr_ddd, nr_telefone, id_usuario) VALUES (2, 21, 923456789, 2);
+INSERT INTO T_BR_TELEFONE_USUARIO (id_telefone, nr_ddd, nr_telefone, id_usuario) VALUES (3, 31, 934567890, 3);
+INSERT INTO T_BR_TELEFONE_USUARIO (id_telefone, nr_ddd, nr_telefone, id_usuario) VALUES (4, 41, 945678901, 4);
+INSERT INTO T_BR_TELEFONE_USUARIO (id_telefone, nr_ddd, nr_telefone, id_usuario) VALUES (5, 51, 956789012, 5);
+INSERT INTO T_BR_TELEFONE_USUARIO (id_telefone, nr_ddd, nr_telefone, id_usuario) VALUES (6, 61, 967890123, 6);
+INSERT INTO T_BR_TELEFONE_USUARIO (id_telefone, nr_ddd, nr_telefone, id_usuario) VALUES (7, 71, 978901234, 7);
+INSERT INTO T_BR_TELEFONE_USUARIO (id_telefone, nr_ddd, nr_telefone, id_usuario) VALUES (8, 81, 989012345, 8);
+INSERT INTO T_BR_TELEFONE_USUARIO (id_telefone, nr_ddd, nr_telefone, id_usuario) VALUES (9, 91, 990123456, 9);
+INSERT INTO T_BR_TELEFONE_USUARIO (id_telefone, nr_ddd, nr_telefone, id_usuario) VALUES (10, 11, 901234567, 10);
+--------------------------------------------------------------------------------
+INSERT INTO T_BR_EMAIL_USUARIO (id_email_contato, varchar_email, id_usuario) VALUES (1, 'usuario1@example.com', 1);
+INSERT INTO T_BR_EMAIL_USUARIO (id_email_contato, varchar_email, id_usuario) VALUES (2, 'usuario2@example.com', 2);
+INSERT INTO T_BR_EMAIL_USUARIO (id_email_contato, varchar_email, id_usuario) VALUES (3, 'usuario3@example.com', 3);
+INSERT INTO T_BR_EMAIL_USUARIO (id_email_contato, varchar_email, id_usuario) VALUES (4, 'usuario4@example.com', 4);
+INSERT INTO T_BR_EMAIL_USUARIO (id_email_contato, varchar_email, id_usuario) VALUES (5, 'usuario5@example.com', 5);
+INSERT INTO T_BR_EMAIL_USUARIO (id_email_contato, varchar_email, id_usuario) VALUES (6, 'usuario6@example.com', 6);
+INSERT INTO T_BR_EMAIL_USUARIO (id_email_contato, varchar_email, id_usuario) VALUES (7, 'usuario7@example.com', 7);
+INSERT INTO T_BR_EMAIL_USUARIO (id_email_contato, varchar_email, id_usuario) VALUES (8, 'usuario8@example.com', 8);
+INSERT INTO T_BR_EMAIL_USUARIO (id_email_contato, varchar_email, id_usuario) VALUES (9, 'usuario9@example.com', 9);
+INSERT INTO T_BR_EMAIL_USUARIO (id_email_contato, varchar_email, id_usuario) VALUES (10, 'usuario10@example.com', 10);
+--------------------------------------------------------------------------------
+INSERT INTO T_BR_NIVEL_CONFIABILIDADE (id_nivel_confiabilidade, numeric_nivel_confiabilidade, id_usuario) VALUES (1, 5, 1);
+INSERT INTO T_BR_NIVEL_CONFIABILIDADE (id_nivel_confiabilidade, numeric_nivel_confiabilidade, id_usuario) VALUES (2, 4, 2);
+INSERT INTO T_BR_NIVEL_CONFIABILIDADE (id_nivel_confiabilidade, numeric_nivel_confiabilidade, id_usuario) VALUES (3, 3, 3);
+INSERT INTO T_BR_NIVEL_CONFIABILIDADE (id_nivel_confiabilidade, numeric_nivel_confiabilidade, id_usuario) VALUES (4, 2, 4);
+INSERT INTO T_BR_NIVEL_CONFIABILIDADE (id_nivel_confiabilidade, numeric_nivel_confiabilidade, id_usuario) VALUES (5, 1, 5);
+INSERT INTO T_BR_NIVEL_CONFIABILIDADE (id_nivel_confiabilidade, numeric_nivel_confiabilidade, id_usuario) VALUES (6, 5, 6);
+INSERT INTO T_BR_NIVEL_CONFIABILIDADE (id_nivel_confiabilidade, numeric_nivel_confiabilidade, id_usuario) VALUES (7, 4, 7);
+INSERT INTO T_BR_NIVEL_CONFIABILIDADE (id_nivel_confiabilidade, numeric_nivel_confiabilidade, id_usuario) VALUES (8, 3, 8);
+INSERT INTO T_BR_NIVEL_CONFIABILIDADE (id_nivel_confiabilidade, numeric_nivel_confiabilidade, id_usuario) VALUES (9, 2, 9);
+INSERT INTO T_BR_NIVEL_CONFIABILIDADE (id_nivel_confiabilidade, numeric_nivel_confiabilidade, id_usuario) VALUES (10, 1, 10);
+--------------------------------------------------------------------------------
+INSERT INTO T_BR_LOG_ERROS (id_log, nome_procedure, nome_usuario, data_ocorrencia, codigo_erro, mensagem_erro) VALUES (1, 'PROC_EXEMPLO_1', 'usuario1', TO_DATE('2022-01-01', 'YYYY-MM-DD'), 100, 'Erro de exemplo 1');
+INSERT INTO T_BR_LOG_ERROS (id_log, nome_procedure, nome_usuario, data_ocorrencia, codigo_erro, mensagem_erro) VALUES (2, 'PROC_EXEMPLO_2', 'usuario2', TO_DATE('2022-02-01', 'YYYY-MM-DD'), 200, 'Erro de exemplo 2');
+INSERT INTO T_BR_LOG_ERROS (id_log, nome_procedure, nome_usuario, data_ocorrencia, codigo_erro, mensagem_erro) VALUES (3, 'PROC_EXEMPLO_3', 'usuario3', TO_DATE('2022-03-01', 'YYYY-MM-DD'), 300, 'Erro de exemplo 3');
+INSERT INTO T_BR_LOG_ERROS (id_log, nome_procedure, nome_usuario, data_ocorrencia, codigo_erro, mensagem_erro) VALUES (4, 'PROC_EXEMPLO_4', 'usuario4', TO_DATE('2022-04-01', 'YYYY-MM-DD'), 400, 'Erro de exemplo 4');
+INSERT INTO T_BR_LOG_ERROS (id_log, nome_procedure, nome_usuario, data_ocorrencia, codigo_erro, mensagem_erro) VALUES (5, 'PROC_EXEMPLO_5', 'usuario5', TO_DATE('2022-05-01', 'YYYY-MM-DD'), 500, 'Erro de exemplo 5');
+INSERT INTO T_BR_LOG_ERROS (id_log, nome_procedure, nome_usuario, data_ocorrencia, codigo_erro, mensagem_erro) VALUES (6, 'PROC_EXEMPLO_6', 'usuario6', TO_DATE('2022-06-01', 'YYYY-MM-DD'), 600, 'Erro de exemplo 6');
+INSERT INTO T_BR_LOG_ERROS (id_log, nome_procedure, nome_usuario, data_ocorrencia, codigo_erro, mensagem_erro) VALUES (7, 'PROC_EXEMPLO_7', 'usuario7', TO_DATE('2022-07-01', 'YYYY-MM-DD'), 700, 'Erro de exemplo 7');
+INSERT INTO T_BR_LOG_ERROS (id_log, nome_procedure, nome_usuario, data_ocorrencia, codigo_erro, mensagem_erro) VALUES (8, 'PROC_EXEMPLO_8', 'usuario8', TO_DATE('2022-08-01', 'YYYY-MM-DD'), 800, 'Erro de exemplo 8');
+INSERT INTO T_BR_LOG_ERROS (id_log, nome_procedure, nome_usuario, data_ocorrencia, codigo_erro, mensagem_erro) VALUES (9, 'PROC_EXEMPLO_9', 'usuario9', TO_DATE('2022-09-01', 'YYYY-MM-DD'), 900, 'Erro de exemplo 9');
+INSERT INTO T_BR_LOG_ERROS (id_log, nome_procedure, nome_usuario, data_ocorrencia, codigo_erro, mensagem_erro) VALUES (10, 'PROC_EXEMPLO_10', 'usuario10', TO_DATE('2022-10-01', 'YYYY-MM-DD'), 1000, 'Erro de exemplo 10');
+--------------------------------------------------------------------------------
+INSERT INTO T_BR_RELATO (id_relato, blob_foto, ds_relato, nr_latitude, nr_longitude, boolean_praia_suja, boolean_envolve_animais, dt_hr_relato, nr_likes, id_usuario) VALUES (1, EMPTY_BLOB(), 'Relato de exemplo 1', -23.556, -45.0833, 0, 1, TO_DATE('2020-01-01', 'YYYY-MM-DD'), 123, 1);
+INSERT INTO T_BR_RELATO (id_relato, blob_foto, ds_relato, nr_latitude, nr_longitude, boolean_praia_suja, boolean_envolve_animais, dt_hr_relato, nr_likes, id_usuario) VALUES (2, EMPTY_BLOB(), 'Relato de exemplo 2', -23.555, -45.0834, 1, 0, TO_DATE('2020-02-15', 'YYYY-MM-DD'), 456, 2);
+INSERT INTO T_BR_RELATO (id_relato, blob_foto, ds_relato, nr_latitude, nr_longitude, boolean_praia_suja, boolean_envolve_animais, dt_hr_relato, nr_likes, id_usuario) VALUES (3, EMPTY_BLOB(), 'Relato de exemplo 3', -23.554, -45.0835, 0, 1, TO_DATE('2020-03-30', 'YYYY-MM-DD'), 789, 3);
+INSERT INTO T_BR_RELATO (id_relato, blob_foto, ds_relato, nr_latitude, nr_longitude, boolean_praia_suja, boolean_envolve_animais, dt_hr_relato, nr_likes, id_usuario) VALUES (4, EMPTY_BLOB(), 'Relato de exemplo 4', -23.553, -45.0836, 1, 0, TO_DATE('2020-04-15', 'YYYY-MM-DD'), 321, 4);
+INSERT INTO T_BR_RELATO (id_relato, blob_foto, ds_relato, nr_latitude, nr_longitude, boolean_praia_suja, boolean_envolve_animais, dt_hr_relato, nr_likes, id_usuario) VALUES (5, EMPTY_BLOB(), 'Relato de exemplo 5', -23.552, -45.0837, 0, 1, TO_DATE('2020-05-30', 'YYYY-MM-DD'), 654, 5);
+INSERT INTO T_BR_RELATO (id_relato, blob_foto, ds_relato, nr_latitude, nr_longitude, boolean_praia_suja, boolean_envolve_animais, dt_hr_relato, nr_likes, id_usuario) VALUES (6, EMPTY_BLOB(), 'Relato de exemplo 6', -23.551, -45.0838, 1, 0, TO_DATE('2020-06-15', 'YYYY-MM-DD'), 987, 6);
+INSERT INTO T_BR_RELATO (id_relato, blob_foto, ds_relato, nr_latitude, nr_longitude, boolean_praia_suja, boolean_envolve_animais, dt_hr_relato, nr_likes, id_usuario) VALUES (7, EMPTY_BLOB(), 'Relato de exemplo 7', -23.556, -45.0839, 0, 1, TO_DATE('2020-07-30', 'YYYY-MM-DD'), 234, 7);
+INSERT INTO T_BR_RELATO (id_relato, blob_foto, ds_relato, nr_latitude, nr_longitude, boolean_praia_suja, boolean_envolve_animais, dt_hr_relato, nr_likes, id_usuario) VALUES (8, EMPTY_BLOB(), 'Relato de exemplo 8', -23.555, -45.0840, 1, 0, TO_DATE('2020-08-15', 'YYYY-MM-DD'), 567, 8);
+INSERT INTO T_BR_RELATO (id_relato, blob_foto, ds_relato, nr_latitude, nr_longitude, boolean_praia_suja, boolean_envolve_animais, dt_hr_relato, nr_likes, id_usuario) VALUES (9, EMPTY_BLOB(), 'Relato de exemplo 9', -23.554, -45.0841, 0, 1, TO_DATE('2020-09-30', 'YYYY-MM-DD'), 890, 9);
+INSERT INTO T_BR_RELATO (id_relato, blob_foto, ds_relato, nr_latitude, nr_longitude, boolean_praia_suja, boolean_envolve_animais, dt_hr_relato, nr_likes, id_usuario) VALUES (10, EMPTY_BLOB(), 'Relato de exemplo 10', -23.553, -45.0842, 1, 0, TO_DATE('2020-10-15', 'YYYY-MM-DD'), 123, 10);
 
 ----
 DECLARE
