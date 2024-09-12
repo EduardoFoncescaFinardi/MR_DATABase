@@ -690,56 +690,110 @@ EXEC RELATORIO_CONSULTAS_ANALISADAS;
 ------------------------------SPRINT 3------------------------------
 --------------------------------------------------------------------
 
-------------------------------FUNÇÕES--------------------------------
+------------------------------PROCEDURES(COM FUNÇÃO JSON)--------------------------------
 set serveroutput on
 SET VERIFY OFF
 
 --- Função JSON
 CREATE OR REPLACE FUNCTION relacional_para_json(p_cursor SYS_REFCURSOR) RETURN CLOB IS
-  l_json CLOB;
-  l_row  VARCHAR2(32767);
+  l_json CLOB := '[';
+  l_registro T_TC_CADASTRO%ROWTYPE;
+  l_primeiro BOOLEAN := TRUE;
 BEGIN
-  l_json := '[';
   LOOP
-    FETCH p_cursor INTO l_row;
+    FETCH p_cursor INTO l_registro;
     EXIT WHEN p_cursor%NOTFOUND;
-    l_json := l_json || l_row || ',';
+    
+    IF NOT l_primeiro THEN
+      l_json := l_json || ',';
+    ELSE
+      l_primeiro := FALSE;
+    END IF;
+    
+    l_json := l_json || '{' ||
+              '"id_cadastro":' || l_registro.id_cadastro || ',' ||
+              '"nr_cnpj":' || l_registro.nr_cnpj || ',' ||
+              '"varchar_senha":"' || l_registro.varchar_senha || '",' ||
+              '"nm_razaosocial":"' || l_registro.nm_razaosocial || '"}';
   END LOOP;
-  CLOSE p_cursor;
-  l_json := RTRIM(l_json, ',') || ']';
+  
+  l_json := l_json || ']';
   RETURN l_json;
 END;
+--- 
 
-
-CREATE OR REPLACE PROCEDURE exibir_dados_em_json IS
-  CURSOR c_dados IS
-    SELECT 
-      c.id_cadastro, 
-      c.nm_razaosocial, 
-      e.varchar_email 
-    FROM 
-      T_TC_CADASTRO c
-      JOIN T_TC_EMAIL_CONTATO e ON c.id_cadastro = e.id_cadastro;
-  
+--- PROC DA FUNÇÃO JSON
+CREATE OR REPLACE PROCEDURE proc_join_para_json IS
   l_cursor SYS_REFCURSOR;
   l_json CLOB;
-  
-  -- Exceções
-  no_data_found EXCEPTION;
-  too_many_rows EXCEPTION;
-  others EXCEPTION;
-  
 BEGIN
-  OPEN l_cursor FOR c_dados;
+  OPEN l_cursor FOR
+    SELECT c.id_cadastro, c.nr_cnpj, c.varchar_senha, c.nm_razaosocial
+    FROM T_TC_CADASTRO c
+    JOIN T_TC_EMAIL_CONTATO e ON c.id_cadastro = e.id_cadastro;
+
   l_json := relacional_para_json(l_cursor);
   DBMS_OUTPUT.PUT_LINE(l_json);
-  
+
+  CLOSE l_cursor;
+
 EXCEPTION
-  WHEN no_data_found THEN
+  WHEN NO_DATA_FOUND THEN
     DBMS_OUTPUT.PUT_LINE('Nenhum dado encontrado.');
-  WHEN too_many_rows THEN
+  WHEN TOO_MANY_ROWS THEN
     DBMS_OUTPUT.PUT_LINE('Muitos dados encontrados.');
-  WHEN others THEN
-    DBMS_OUTPUT.PUT_LINE('Erro desconhecido: ' || SQLERRM);
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Erro: ' || SQLERRM);
 END;
 
+--- EXEC PROC
+EXEC proc_join_para_json;
+---
+
+--- PROC TABELA ANTERIRO, ATUAL E PROXIMO
+CREATE OR REPLACE PROCEDURE proc_anterior_atual_proximo IS
+  CURSOR cursor_cadastro IS
+    SELECT id_cadastro, nr_cnpj FROM T_TC_CADASTRO ORDER BY id_cadastro;
+  
+  nr_cnpj_atual T_TC_CADASTRO.nr_cnpj%TYPE;
+  nr_cnpj_anterior T_TC_CADASTRO.nr_cnpj%TYPE;
+  nr_cnpj_proximo T_TC_CADASTRO.nr_cnpj%TYPE;
+  id_atual T_TC_CADASTRO.id_cadastro%TYPE;
+  id_anterior T_TC_CADASTRO.id_cadastro%TYPE := NULL;
+  id_proximo T_TC_CADASTRO.id_cadastro%TYPE;
+BEGIN
+  DBMS_OUTPUT.PUT_LINE(RPAD('Cod_emp', 20) || RPAD('Cod_dep', 20) || RPAD('Anterior', 20) || RPAD('Atual', 20) || RPAD('Próximo', 20));
+
+  OPEN cursor_cadastro;
+  FETCH cursor_cadastro INTO id_atual, nr_cnpj_atual;
+  FETCH cursor_cadastro INTO id_proximo, nr_cnpj_proximo;
+
+  LOOP
+    EXIT WHEN cursor_cadastro%NOTFOUND;
+    DBMS_OUTPUT.PUT_LINE(RPAD(NVL(TO_CHAR(id_anterior), 'Vazio'), 20) || RPAD(TO_CHAR(id_atual), 20) || 
+    RPAD(NVL(TO_CHAR(nr_cnpj_anterior), 'Vazio'), 20) || RPAD(TO_CHAR(nr_cnpj_atual), 20) || 
+    RPAD(NVL(TO_CHAR(nr_cnpj_proximo), 'Vazio'), 20));
+    
+    id_anterior := id_atual;
+    nr_cnpj_anterior := nr_cnpj_atual;
+    id_atual := id_proximo;
+    nr_cnpj_atual := nr_cnpj_proximo;
+    FETCH cursor_cadastro INTO id_proximo, nr_cnpj_proximo;
+  END LOOP;
+
+  CLOSE cursor_cadastro;
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('Nenhum dado encontrado.');
+  WHEN TOO_MANY_ROWS THEN
+    DBMS_OUTPUT.PUT_LINE('Muitos dados encontrados.');
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Erro: ' || SQLERRM);
+END;
+
+-- EXEC PROC
+EXEC proc_anterior_atual_proximo;
+---
+
+-----------------------------FUNÇÕES--------------------------------
