@@ -694,7 +694,7 @@ EXEC RELATORIO_CONSULTAS_ANALISADAS;
 set serveroutput on
 SET VERIFY OFF
 
---- Função JSON
+--- Função JSON 
 CREATE OR REPLACE FUNCTION relacional_para_json(p_cursor SYS_REFCURSOR) RETURN CLOB IS
   l_json CLOB := '[';
   l_registro T_TC_CADASTRO%ROWTYPE;
@@ -797,3 +797,161 @@ EXEC proc_anterior_atual_proximo;
 ---
 
 -----------------------------FUNÇÕES--------------------------------
+
+--Função JSON 
+
+--- FEITO ACIMA, NA SESSÃO DE PROCEDURES, COMO SOLICITADO:
+--- Uma função deve ler os dados recebidos e transformá-lo para o 
+--- formato JSON. Não use as funções built-in internas de transformação de e para 
+--- JSON do banco de dados Oracle. Essa função será usada no primeiro 
+--- procedimento solicitado em 1)
+
+---
+set serveroutput on
+set verify off
+
+--- Função com maior complexidade de senha, ja usada anteriormente "verificar_tamanho_senha"
+CREATE OR REPLACE FUNCTION verifica_complexidade_senha(senha IN VARCHAR2) RETURN BOOLEAN IS
+BEGIN
+  IF LENGTH(senha) < 8 OR LENGTH(senha) > 60 THEN
+    RETURN FALSE;
+  END IF;
+
+  IF NOT REGEXP_LIKE(senha, '[A-Z]') THEN
+    RETURN FALSE;
+  END IF;
+
+  IF NOT REGEXP_LIKE(senha, '[a-z]') THEN
+    RETURN FALSE;
+  END IF;
+
+  IF NOT REGEXP_LIKE(senha, '[0-9]') THEN
+    RETURN FALSE;
+  END IF;
+
+  RETURN TRUE;
+
+EXCEPTION
+  WHEN VALUE_ERROR THEN
+    DBMS_OUTPUT.PUT_LINE('Erro de valor: Verifique o comprimento da senha.');
+    RETURN FALSE;
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('Nenhum dado encontrado.');
+    RETURN FALSE;
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Erro: ' || SQLERRM);
+    RETURN FALSE;
+END;
+
+--- Teste da função
+
+DECLARE
+  resultado BOOLEAN;
+BEGIN
+  resultado := verifica_complexidade_senha('Senha123');
+  
+  IF resultado THEN
+    DBMS_OUTPUT.PUT_LINE('Senha válida');
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('Senha inválida');
+  END IF;
+END;
+
+---
+
+-----------------------------TRIGGERS--------------------------------
+
+--- Nova Table de Auditoria
+
+CREATE TABLE T_AUDITORIA_CONSULTA (
+    id_auditoria NUMERIC PRIMARY KEY,
+    id_consulta_old NUMERIC,
+    ds_consulta_old VARCHAR(80),
+    dt_consulta_old DATE,
+    blob_csv_arquivo_old BLOB,
+    id_cadastro_old NUMERIC,
+    id_consulta_new NUMERIC,
+    ds_consulta_new VARCHAR(80),
+    dt_consulta_new DATE,
+    blob_csv_arquivo_new BLOB,
+    id_cadastro_new NUMERIC,
+    usuario VARCHAR(30),
+    operacao VARCHAR(10),
+    data_operacao TIMESTAMP
+);
+
+CREATE SEQUENCE SEQ_AUDITORIA_CONSULTA
+  START WITH 1
+  INCREMENT BY 1
+  MINVALUE 0
+  MAXVALUE 1000
+  NOCYCLE;
+
+---
+
+--- Trigger da Table de auditoria
+
+CREATE OR REPLACE TRIGGER TRG_AUDITORIA_CONSULTA
+AFTER INSERT OR UPDATE OR DELETE ON T_TC_CONSULTA
+FOR EACH ROW
+DECLARE
+    v_usuario VARCHAR2(30);
+BEGIN
+    SELECT USER INTO v_usuario FROM dual;
+
+    IF INSERTING THEN
+        INSERT INTO T_AUDITORIA_CONSULTA (
+            id_auditoria, id_consulta_new, ds_consulta_new, dt_consulta_new, blob_csv_arquivo_new, id_cadastro_new,
+            usuario, operacao, data_operacao
+        ) VALUES (
+            SEQ_AUDITORIA_CONSULTA.NEXTVAL, :NEW.id_consulta, :NEW.ds_consulta, :NEW.dt_consulta, :NEW.blob_csv_arquivo, :NEW.id_cadastro,
+            v_usuario, 'INSERT', SYSTIMESTAMP
+        );
+    ELSIF UPDATING THEN
+        INSERT INTO T_AUDITORIA_CONSULTA (
+            id_auditoria, id_consulta_old, ds_consulta_old, dt_consulta_old, blob_csv_arquivo_old, id_cadastro_old,
+            id_consulta_new, ds_consulta_new, dt_consulta_new, blob_csv_arquivo_new, id_cadastro_new,
+            usuario, operacao, data_operacao
+        ) VALUES (
+            SEQ_AUDITORIA_CONSULTA.NEXTVAL, :OLD.id_consulta, :OLD.ds_consulta, :OLD.dt_consulta, :OLD.blob_csv_arquivo, :OLD.id_cadastro,
+            :NEW.id_consulta, :NEW.ds_consulta, :NEW.dt_consulta, :NEW.blob_csv_arquivo, :NEW.id_cadastro,
+            v_usuario, 'UPDATE', SYSTIMESTAMP
+        );
+    ELSIF DELETING THEN
+        INSERT INTO T_AUDITORIA_CONSULTA (
+            id_auditoria, id_consulta_old, ds_consulta_old, dt_consulta_old, blob_csv_arquivo_old, id_cadastro_old,
+            usuario, operacao, data_operacao
+        ) VALUES (
+            SEQ_AUDITORIA_CONSULTA.NEXTVAL, :OLD.id_consulta, :OLD.ds_consulta, :OLD.dt_consulta, :OLD.blob_csv_arquivo, :OLD.id_cadastro,
+            v_usuario, 'DELETE', SYSTIMESTAMP
+        );
+    END IF;
+END;
+
+---
+
+--- Teste do Trigger
+
+---
+INSERT INTO T_TC_CONSULTA (id_consulta, ds_consulta, dt_consulta, blob_csv_arquivo, id_cadastro) VALUES (SEQ_CONSULTA.NEXTVAL, 'Consulta_1', SYSDATE, HEXTORAW('48656C6C6F'), 1);
+---
+
+---
+SELECT * FROM T_AUDITORIA_CONSULTA;
+---
+
+---
+UPDATE T_TC_CONSULTA SET ds_consulta = 'Consulta_2', dt_consulta = SYSDATE, blob_csv_arquivo = HEXTORAW('48656C6C6F'), id_cadastro = 2 WHERE id_consulta = 1;
+---
+
+---
+SELECT * FROM T_AUDITORIA_CONSULTA;
+---
+
+---
+DELETE FROM T_TC_CONSULTA WHERE id_consulta = 2;
+---
+
+---
+SELECT * FROM T_AUDITORIA_CONSULTA;
+---
