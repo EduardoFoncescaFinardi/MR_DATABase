@@ -178,6 +178,7 @@ INSERT INTO T_TC_ENDERECO_EMPRESA (id_endereco, nr_logradouro, cep, ds_ponto_de_
 INSERT INTO T_TC_ENDERECO_EMPRESA (id_endereco, nr_logradouro, cep, ds_ponto_de_referencia, id_cadastro) VALUES (SEQ_ENDERECO_EMPRESA.NEXTVAL, 345, 34567890, 'Atrás do shopping novo', 3);
 INSERT INTO T_TC_ENDERECO_EMPRESA (id_endereco, nr_logradouro, cep, ds_ponto_de_referencia, id_cadastro) VALUES (SEQ_ENDERECO_EMPRESA.NEXTVAL, 456, 45678901, 'Em frente ao parque da cidade', 4);
 INSERT INTO T_TC_ENDERECO_EMPRESA (id_endereco, nr_logradouro, cep, ds_ponto_de_referencia, id_cadastro) VALUES (SEQ_ENDERECO_EMPRESA.NEXTVAL, 567, 56789012, 'Lado sul da universidade', 5);
+
 --------------------------------------------------------------------
 
 INSERT INTO T_TC_TELEFONE_EMPRESA (id_telefone, nr_ddi, nr_ddd, nr_telefone, tp_telefone, id_cadastro) VALUES (SEQ_TELEFONE_EMPRESA.NEXTVAL, 55, 11, 12345678, 'Fixo', 1);
@@ -187,11 +188,13 @@ INSERT INTO T_TC_TELEFONE_EMPRESA (id_telefone, nr_ddi, nr_ddd, nr_telefone, tp_
 INSERT INTO T_TC_TELEFONE_EMPRESA (id_telefone, nr_ddi, nr_ddd, nr_telefone, tp_telefone, id_cadastro) VALUES (SEQ_TELEFONE_EMPRESA.NEXTVAL, 55, 51, 56789012, 'Fax', 5);
 
 --------------------------------------------------------------------
+
 INSERT INTO T_TC_CONSULTA (id_consulta, ds_consulta, dt_consulta, blob_csv_arquivo, id_cadastro) VALUES (SEQ_CONSULTA.NEXTVAL, 'Consulta sobre impostos', '29/10/02', HEXTORAW('48656C6C6F'), 1);
 INSERT INTO T_TC_CONSULTA (id_consulta, ds_consulta, dt_consulta, blob_csv_arquivo, id_cadastro) VALUES (SEQ_CONSULTA.NEXTVAL, 'Consulta sobre exportação', '29/10/02', HEXTORAW('48656C6C6F'), 2);
 INSERT INTO T_TC_CONSULTA (id_consulta, ds_consulta, dt_consulta, blob_csv_arquivo, id_cadastro) VALUES (SEQ_CONSULTA.NEXTVAL, 'Consulta sobre importação', '29/10/02', HEXTORAW('48656C6C6F'), 3);
 INSERT INTO T_TC_CONSULTA (id_consulta, ds_consulta, dt_consulta, blob_csv_arquivo, id_cadastro) VALUES (SEQ_CONSULTA.NEXTVAL, 'Consulta sobre regulamentação', '29/10/02', HEXTORAW('48656C6C6F'), 4);
 INSERT INTO T_TC_CONSULTA (id_consulta, ds_consulta, dt_consulta, blob_csv_arquivo, id_cadastro) VALUES (SEQ_CONSULTA.NEXTVAL, 'Consulta sobre inovação', '29/10/02', HEXTORAW('48656C6C6F'), 5);
+
 --------------------------------------------------------------------
 
 INSERT INTO T_TC_REPRESENTANTE (id_representante, nm_representante, id_consulta) VALUES (SEQ_REPRESENTANTE.NEXTVAL, 'Representante A', 1);
@@ -199,6 +202,7 @@ INSERT INTO T_TC_REPRESENTANTE (id_representante, nm_representante, id_consulta)
 INSERT INTO T_TC_REPRESENTANTE (id_representante, nm_representante, id_consulta) VALUES (SEQ_REPRESENTANTE.NEXTVAL, 'Representante C', 3);
 INSERT INTO T_TC_REPRESENTANTE (id_representante, nm_representante, id_consulta) VALUES (SEQ_REPRESENTANTE.NEXTVAL, 'Representante D', 4);
 INSERT INTO T_TC_REPRESENTANTE (id_representante, nm_representante, id_consulta) VALUES (SEQ_REPRESENTANTE.NEXTVAL, 'Representante E', 5);
+
 --------------------------------------------------------------------
 
 INSERT INTO T_TC_ANALISE_DA_CONSULTA (id_analise_da_consulta, pdf_analise_da_consulta, st_analise_da_consulta, id_consulta)VALUES (1, HEXTORAW('48656C6C6F'), 'i', 1);
@@ -324,311 +328,366 @@ END;
 
 ---CADASTRO
 CREATE OR REPLACE PROCEDURE SP_INSERT_CADASTRO(
-    P_NR_CNPJ NUMERIC,
-    P_SENHA VARCHAR,
-    P_RAZAOSOCIAL VARCHAR
-)
-AS
-BEGIN
-    INSERT INTO T_TC_CADASTRO (id_cadastro, nr_cnpj, varchar_senha, nm_razaosocial)
-    VALUES (SEQ_CADASTRO.NEXTVAL, P_NR_CNPJ, P_SENHA, P_RAZAOSOCIAL);
+    P_NR_CNPJ NUMERIC, 
+    P_SENHA VARCHAR, 
+    P_RAZAOSOCIAL VARCHAR 
+) AS 
+BEGIN 
+    INSERT INTO T_TC_CADASTRO (id_cadastro, nr_cnpj, varchar_senha, nm_razaosocial) 
+    VALUES (SEQ_CADASTRO.NEXTVAL, P_NR_CNPJ, P_SENHA, P_RAZAOSOCIAL); 
 END;
 ---
-CREATE OR REPLACE PROCEDURE SP_UPDATE_CADASTRO(
-    P_ID_CADASTRO NUMERIC,
-    P_NR_CNPJ NUMERIC,
-    P_SENHA VARCHAR,
-    P_RAZAOSOCIAL VARCHAR
-)
-AS
-BEGIN
-    UPDATE T_TC_CADASTRO
-    SET nr_cnpj = P_NR_CNPJ,
-        varchar_senha = P_SENHA,
-        nm_razaosocial = P_RAZAOSOCIAL
-    WHERE id_cadastro = P_ID_CADASTRO;
-END;
----
-CREATE OR REPLACE PROCEDURE SP_DELETE_CADASTRO(
-    P_ID_CADASTRO NUMERIC
-)
-AS
-BEGIN
-    DELETE FROM T_TC_CADASTRO
-    WHERE id_cadastro = P_ID_CADASTRO;
-END;
+EXEC SP_INSERT_CADASTRO(67890123456789, 'senha678', 'Empresa F');
 ---
 
+CREATE OR REPLACE PROCEDURE SP_UPDATE_CADASTRO(
+    P_ID_CADASTRO NUMERIC, 
+    P_NR_CNPJ NUMERIC, 
+    P_SENHA VARCHAR, 
+    P_RAZAOSOCIAL VARCHAR 
+) AS 
+BEGIN 
+    UPDATE T_TC_CADASTRO 
+    SET nr_cnpj = P_NR_CNPJ, varchar_senha = P_SENHA, nm_razaosocial = P_RAZAOSOCIAL 
+    WHERE id_cadastro = P_ID_CADASTRO; 
+END;
+
+---
+EXEC SP_UPDATE_CADASTRO(6, 67890123456789, 'nova_senha678', 'Empresa F Atualizada');
+---
 
 ---EMAIL_CONTATO
 CREATE OR REPLACE PROCEDURE SP_INSERT_EMAIL_CONTATO(
-    P_EMAIL VARCHAR,
-    P_ID_CADASTRO NUMERIC
-)
-AS
-BEGIN
-    INSERT INTO T_TC_EMAIL_CONTATO (id_email_contato, varchar_email, id_cadastro)
-    VALUES (SEQ_EMAIL_CONTATO.NEXTVAL, P_EMAIL, P_ID_CADASTRO);
+    P_EMAIL VARCHAR, 
+    P_ID_CADASTRO NUMERIC 
+) AS 
+BEGIN 
+    INSERT INTO T_TC_EMAIL_CONTATO (id_email_contato, varchar_email, id_cadastro) 
+    VALUES (SEQ_EMAIL_CONTATO.NEXTVAL, P_EMAIL, P_ID_CADASTRO); 
 END;
 ---
-CREATE OR REPLACE PROCEDURE SP_UPDATE_EMAIL_CONTATO(
-    P_ID_EMAIL_CONTATO NUMERIC,
-    P_EMAIL VARCHAR,
-    P_ID_CADASTRO NUMERIC
-)
-AS
-BEGIN
-    UPDATE T_TC_EMAIL_CONTATO
-    SET varchar_email = P_EMAIL,
-        id_cadastro = P_ID_CADASTRO
-    WHERE id_email_contato = P_ID_EMAIL_CONTATO;
-END;
----
-CREATE OR REPLACE PROCEDURE SP_DELETE_EMAIL_CONTATO(
-    P_ID_EMAIL_CONTATO NUMERIC
-)
-AS
-BEGIN
-    DELETE FROM T_TC_EMAIL_CONTATO
-    WHERE id_email_contato = P_ID_EMAIL_CONTATO;
-END;
+EXEC SP_INSERT_EMAIL_CONTATO('email@empresaF.com', 6);
 ---
 
+CREATE OR REPLACE PROCEDURE SP_UPDATE_EMAIL_CONTATO(
+    P_ID_EMAIL_CONTATO NUMERIC, 
+    P_EMAIL VARCHAR, 
+    P_ID_CADASTRO NUMERIC 
+) AS 
+BEGIN 
+    UPDATE T_TC_EMAIL_CONTATO 
+    SET varchar_email = P_EMAIL, id_cadastro = P_ID_CADASTRO 
+    WHERE id_email_contato = P_ID_EMAIL_CONTATO; 
+END;
+---
+EXEC SP_UPDATE_EMAIL_CONTATO(6, 'novo_email@empresaF.com', 6);
+---
 
 ---LOGIN
 CREATE OR REPLACE PROCEDURE SP_INSERT_LOGIN(
-    P_NR_CNPJ NUMERIC,
-    P_SENHA VARCHAR,
-    P_ID_CADASTRO NUMERIC
-)
-AS
-BEGIN
-    INSERT INTO T_TC_LOGIN (id_login, nr_cnpj, varchar_senha, id_cadastro)
-    VALUES (SEQ_LOGIN.NEXTVAL, P_NR_CNPJ, P_SENHA, P_ID_CADASTRO);
+    P_NR_CNPJ NUMERIC, 
+    P_SENHA VARCHAR, 
+    P_ID_CADASTRO NUMERIC 
+) AS 
+BEGIN 
+    INSERT INTO T_TC_LOGIN (id_login, nr_cnpj, varchar_senha, id_cadastro) 
+    VALUES (SEQ_LOGIN.NEXTVAL, P_NR_CNPJ, P_SENHA, P_ID_CADASTRO); 
 END;
+
 ---
-CREATE OR REPLACE PROCEDURE SP_UPDATE_LOGIN(
-    P_ID_LOGIN NUMERIC,
-    P_NR_CNPJ NUMERIC,
-    P_SENHA VARCHAR,
-    P_ID_CADASTRO NUMERIC
-)
-AS
-BEGIN
-    UPDATE T_TC_LOGIN
-    SET nr_cnpj = P_NR_CNPJ,
-        varchar_senha = P_SENHA,
-        id_cadastro = P_ID_CADASTRO
-    WHERE id_login = P_ID_LOGIN;
-END;
----
-CREATE OR REPLACE PROCEDURE SP_DELETE_LOGIN(
-    P_ID_LOGIN NUMERIC
-)
-AS
-BEGIN
-    DELETE FROM T_TC_LOGIN
-    WHERE id_login = P_ID_LOGIN;
-END;
+EXEC SP_INSERT_LOGIN(67890123456789, 678, 6);
+
+DESC T_TC_LOGIN;
 ---
 
+CREATE OR REPLACE PROCEDURE SP_UPDATE_LOGIN(
+    P_ID_LOGIN NUMERIC, 
+    P_NR_CNPJ NUMERIC, 
+    P_SENHA VARCHAR, 
+    P_ID_CADASTRO NUMERIC 
+) AS 
+BEGIN 
+    UPDATE T_TC_LOGIN 
+    SET nr_cnpj = P_NR_CNPJ, varchar_senha = P_SENHA, id_cadastro = P_ID_CADASTRO 
+    WHERE id_login = P_ID_LOGIN; 
+END;
+
+---
+EXEC SP_UPDATE_LOGIN(6, 67890123456789, 679 , 6);
+---
 
 ---ENDERECO_EMPRESA
 CREATE OR REPLACE PROCEDURE SP_INSERT_ENDERECO_EMPRESA(
-    P_NR_LOGRADOURO NUMERIC,
-    P_CEP NUMERIC,
-    P_DS_PONTO_REFERENCIA VARCHAR,
-    P_ID_CADASTRO NUMERIC
-)
-AS
-BEGIN
-    INSERT INTO T_TC_ENDERECO_EMPRESA (id_endereco, nr_logradouro, cep, ds_ponto_de_referencia, id_cadastro)
-    VALUES (SEQ_ENDERECO_EMPRESA.NEXTVAL, P_NR_LOGRADOURO, P_CEP, P_DS_PONTO_REFERENCIA, P_ID_CADASTRO);
+    P_NR_LOGRADOURO NUMERIC, 
+    P_CEP NUMERIC, 
+    P_DS_PONTO_REFERENCIA VARCHAR, 
+    P_ID_CADASTRO NUMERIC 
+) AS 
+BEGIN 
+    INSERT INTO T_TC_ENDERECO_EMPRESA (id_endereco, nr_logradouro, cep, ds_ponto_de_referencia, id_cadastro) 
+    VALUES (SEQ_ENDERECO_EMPRESA.NEXTVAL, P_NR_LOGRADOURO, P_CEP, P_DS_PONTO_REFERENCIA, P_ID_CADASTRO); 
 END;
+
 ---
+EXEC SP_INSERT_ENDERECO_EMPRESA(678, 67890123, 'Próximo ao parque central', 6);
+---
+
 CREATE OR REPLACE PROCEDURE SP_UPDATE_ENDERECO_EMPRESA(
-    P_ID_ENDERECO NUMERIC,
-    P_NR_LOGRADOURO NUMERIC,
-    P_CEP NUMERIC,
-    P_DS_PONTO_REFERENCIA VARCHAR,
-    P_ID_CADASTRO NUMERIC
-)
-AS
-BEGIN
-    UPDATE T_TC_ENDERECO_EMPRESA
-    SET nr_logradouro = P_NR_LOGRADOURO,
-        cep = P_CEP,
-        ds_ponto_de_referencia = P_DS_PONTO_REFERENCIA,
-        id_cadastro = P_ID_CADASTRO
-    WHERE id_endereco = P_ID_ENDERECO;
+    P_ID_ENDERECO NUMERIC, 
+    P_NR_LOGRADOURO NUMERIC, 
+    P_CEP NUMERIC, 
+    P_DS_PONTO_REFERENCIA VARCHAR, 
+    P_ID_CADASTRO NUMERIC 
+) AS 
+BEGIN 
+    UPDATE T_TC_ENDERECO_EMPRESA 
+    SET nr_logradouro = P_NR_LOGRADOURO, cep = P_CEP, ds_ponto_de_referencia = P_DS_PONTO_REFERENCIA, id_cadastro = P_ID_CADASTRO 
+    WHERE id_endereco = P_ID_ENDERECO; 
 END;
+
 ---
-CREATE OR REPLACE PROCEDURE SP_DELETE_ENDERECO_EMPRESA(
-    P_ID_ENDERECO NUMERIC
-)
-AS
-BEGIN
-    DELETE FROM T_TC_ENDERECO_EMPRESA
-    WHERE id_endereco = P_ID_ENDERECO;
-END;
+EXEC SP_UPDATE_ENDERECO_EMPRESA(6, 678, 67890123, 'Novo ponto de referência', 6);
 ---
 
 ---TELEFONE_EMPRESA
 CREATE OR REPLACE PROCEDURE SP_INSERT_TELEFONE_EMPRESA(
-    P_NR_DDI NUMERIC,
-    P_NR_DDD NUMERIC,
-    P_NR_TELEFONE NUMERIC,
-    P_TP_TELEFONE VARCHAR,
-    P_ID_CADASTRO NUMERIC
-)
-AS
-BEGIN
-    INSERT INTO T_TC_TELEFONE_EMPRESA (id_telefone, nr_ddi, nr_ddd, nr_telefone, tp_telefone, id_cadastro)
-    VALUES (SEQ_TELEFONE_EMPRESA.NEXTVAL, P_NR_DDI, P_NR_DDD, P_NR_TELEFONE, P_TP_TELEFONE, P_ID_CADASTRO);
+    P_NR_DDI NUMERIC, 
+    P_NR_DDD NUMERIC, 
+    P_NR_TELEFONE NUMERIC, 
+    P_TP_TELEFONE VARCHAR, 
+    P_ID_CADASTRO NUMERIC 
+) AS 
+BEGIN 
+    INSERT INTO T_TC_TELEFONE_EMPRESA (id_telefone, nr_ddi, nr_ddd, nr_telefone, tp_telefone, id_cadastro) 
+    VALUES (SEQ_TELEFONE_EMPRESA.NEXTVAL, P_NR_DDI, P_NR_DDD, P_NR_TELEFONE, P_TP_TELEFONE, P_ID_CADASTRO); 
 END;
+
 ---
-CREATE OR REPLACE PROCEDURE SP_UPDATE_TELEFONE_EMPRESA(
-    P_ID_TELEFONE NUMERIC,
-    P_NR_DDI NUMERIC,
-    P_NR_DDD NUMERIC,
-    P_NR_TELEFONE NUMERIC,
-    P_TP_TELEFONE VARCHAR,
-    P_ID_CADASTRO NUMERIC
-)
-AS
-BEGIN
-    UPDATE T_TC_TELEFONE_EMPRESA
-    SET nr_ddi = P_NR_DDI,
-        nr_ddd = P_NR_DDD,
-        nr_telefone = P_NR_TELEFONE,
-        tp_telefone = P_TP_TELEFONE,
-        id_cadastro = P_ID_CADASTRO
-    WHERE id_telefone = P_ID_TELEFONE;
-END;
----
-CREATE OR REPLACE PROCEDURE SP_DELETE_TELEFONE_EMPRESA(
-    P_ID_TELEFONE NUMERIC
-)
-AS
-BEGIN
-    DELETE FROM T_TC_TELEFONE_EMPRESA
-    WHERE id_telefone = P_ID_TELEFONE;
-END;
+EXEC SP_INSERT_TELEFONE_EMPRESA(55, 61, 67890123, 'Fixo', 6);
 ---
 
+CREATE OR REPLACE PROCEDURE SP_UPDATE_TELEFONE_EMPRESA(
+    P_ID_TELEFONE NUMERIC, 
+    P_NR_DDI NUMERIC, 
+    P_NR_DDD NUMERIC, 
+    P_NR_TELEFONE NUMERIC, 
+    P_TP_TELEFONE VARCHAR, 
+    P_ID_CADASTRO NUMERIC 
+) AS 
+BEGIN 
+    UPDATE T_TC_TELEFONE_EMPRESA 
+    SET nr_ddi = P_NR_DDI, nr_ddd = P_NR_DDD, nr_telefone = P_NR_TELEFONE, tp_telefone = P_TP_TELEFONE, id_cadastro = P_ID_CADASTRO 
+    WHERE id_telefone = P_ID_TELEFONE; 
+END;
+
+---
+EXEC SP_UPDATE_TELEFONE_EMPRESA(6, 55, 61, 78901234, 'Móvel', 6);
+---
 
 ---CONSULTA
 CREATE OR REPLACE PROCEDURE SP_INSERT_CONSULTA(
-    P_DS_CONSULTA VARCHAR,
-    P_DT_CONSULTA DATE,
-    P_BLOB_CSV_ARQUIVO BLOB,
-    P_ID_CADASTRO NUMERIC
-)
-AS
-BEGIN
-    INSERT INTO T_TC_CONSULTA (id_consulta, ds_consulta, dt_consulta, blob_csv_arquivo, id_cadastro)
-    VALUES (SEQ_CONSULTA.NEXTVAL, P_DS_CONSULTA, P_DT_CONSULTA, P_BLOB_CSV_ARQUIVO, P_ID_CADASTRO);
+    P_DS_CONSULTA VARCHAR, 
+    P_DT_CONSULTA DATE, 
+    P_BLOB_CSV_ARQUIVO BLOB, 
+    P_ID_CADASTRO NUMERIC 
+) AS 
+BEGIN 
+    INSERT INTO T_TC_CONSULTA (id_consulta, ds_consulta, dt_consulta, blob_csv_arquivo, id_cadastro) 
+    VALUES (SEQ_CONSULTA.NEXTVAL, P_DS_CONSULTA, P_DT_CONSULTA, P_BLOB_CSV_ARQUIVO, P_ID_CADASTRO); 
 END;
+
 ---
-CREATE OR REPLACE PROCEDURE SP_UPDATE_CONSULTA(
-    P_ID_CONSULTA NUMERIC,
-    P_DS_CONSULTA VARCHAR,
-    P_DT_CONSULTA DATE,
-    P_BLOB_CSV_ARQUIVO BLOB,
-    P_ID_CADASTRO NUMERIC
-)
-AS
-BEGIN
-    UPDATE T_TC_CONSULTA
-    SET ds_consulta = P_DS_CONSULTA,
-        dt_consulta = P_DT_CONSULTA,
-        blob_csv_arquivo = P_BLOB_CSV_ARQUIVO,
-        id_cadastro = P_ID_CADASTRO
-    WHERE id_consulta = P_ID_CONSULTA;
-END;
----
-CREATE OR REPLACE PROCEDURE SP_DELETE_CONSULTA(
-    P_ID_CONSULTA NUMERIC
-)
-AS
-BEGIN
-    DELETE FROM T_TC_CONSULTA
-    WHERE id_consulta = P_ID_CONSULTA;
-END;
+EXEC SP_INSERT_CONSULTA('Consulta sobre novos impostos', TO_DATE('30/10/22', 'DD/MM/YY'), HEXTORAW('48656C6C6F'), 6);
 ---
 
+CREATE OR REPLACE PROCEDURE SP_UPDATE_CONSULTA(
+    P_ID_CONSULTA NUMERIC, 
+    P_DS_CONSULTA VARCHAR, 
+    P_DT_CONSULTA DATE, 
+    P_BLOB_CSV_ARQUIVO BLOB, 
+    P_ID_CADASTRO NUMERIC 
+) AS 
+BEGIN 
+    UPDATE T_TC_CONSULTA 
+    SET ds_consulta = P_DS_CONSULTA, dt_consulta = P_DT_CONSULTA, blob_csv_arquivo = P_BLOB_CSV_ARQUIVO, id_cadastro = P_ID_CADASTRO 
+    WHERE id_consulta = P_ID_CONSULTA; 
+END;
+
+---
+EXEC SP_UPDATE_CONSULTA(6, 'Atualização sobre novos impostos', TO_DATE('31/10/22', 'DD/MM/YY'), HEXTORAW('48656C6C6F'), 6);
+---
 
 ---REPRESENTANTE
 CREATE OR REPLACE PROCEDURE SP_INSERT_REPRESENTANTE(
-    P_NM_REPRESENTANTE VARCHAR,
-    P_ID_CONSULTA NUMERIC
-)
-AS
-BEGIN
-    INSERT INTO T_TC_REPRESENTANTE (id_representante, nm_representante, id_consulta)
-    VALUES (SEQ_REPRESENTANTE.NEXTVAL, P_NM_REPRESENTANTE, P_ID_CONSULTA);
+    P_NM_REPRESENTANTE VARCHAR, 
+    P_ID_CONSULTA NUMERIC 
+) AS 
+BEGIN 
+    INSERT INTO T_TC_REPRESENTANTE (id_representante, nm_representante, id_consulta) 
+    VALUES (SEQ_REPRESENTANTE.NEXTVAL, P_NM_REPRESENTANTE, P_ID_CONSULTA); 
 END;
+
 ---
-CREATE OR REPLACE PROCEDURE SP_UPDATE_REPRESENTANTE(
-    P_ID_REPRESENTANTE NUMERIC,
-    P_NM_REPRESENTANTE VARCHAR,
-    P_ID_CONSULTA NUMERIC
-)
-AS
-BEGIN
-    UPDATE T_TC_REPRESENTANTE
-    SET nm_representante = P_NM_REPRESENTANTE,
-        id_consulta = P_ID_CONSULTA
-    WHERE id_representante = P_ID_REPRESENTANTE;
-END;
----
-CREATE OR REPLACE PROCEDURE SP_DELETE_REPRESENTANTE(
-    P_ID_REPRESENTANTE NUMERIC
-)
-AS
-BEGIN
-    DELETE FROM T_TC_REPRESENTANTE
-    WHERE id_representante = P_ID_REPRESENTANTE;
-END;
+EXEC SP_INSERT_REPRESENTANTE('Representante F', 6);
 ---
 
+CREATE OR REPLACE PROCEDURE SP_UPDATE_REPRESENTANTE(
+    P_ID_REPRESENTANTE NUMERIC, 
+    P_NM_REPRESENTANTE VARCHAR, 
+    P_ID_CONSULTA NUMERIC 
+) AS 
+BEGIN 
+    UPDATE T_TC_REPRESENTANTE 
+    SET nm_representante = P_NM_REPRESENTANTE, id_consulta = P_ID_CONSULTA 
+    WHERE id_representante = P_ID_REPRESENTANTE; 
+END;
+
+---
+EXEC SP_UPDATE_REPRESENTANTE(6, 'Novo Representante F', 6);
+---
 
 ---ANALISE_DA_CONSULTA
 CREATE OR REPLACE PROCEDURE SP_INSERT_ANALISE_DA_CONSULTA(
-    P_PDF_ANALISE_DA_CONSULTA BLOB,
-    P_ST_ANALISE_DA_CONSULTA CHAR,
-    P_ID_CONSULTA NUMERIC
-)
-AS
-BEGIN
-    INSERT INTO T_TC_ANALISE_DA_CONSULTA (id_analise_da_consulta, pdf_analise_da_consulta, st_analise_da_consulta, id_consulta)
-    VALUES (SEQ_ANALISE_DA_CONSULTA.NEXTVAL, P_PDF_ANALISE_DA_CONSULTA, P_ST_ANALISE_DA_CONSULTA, P_ID_CONSULTA);
+    P_PDF_ANALISE_DA_CONSULTA BLOB, 
+    P_ST_ANALISE_DA_CONSULTA CHAR, 
+    P_ID_CONSULTA NUMERIC 
+) AS 
+BEGIN 
+    INSERT INTO T_TC_ANALISE_DA_CONSULTA (id_analise_da_consulta, pdf_analise_da_consulta, st_analise_da_consulta, id_consulta) 
+    VALUES (SEQ_ANALISE_DA_CONSULTA.NEXTVAL, P_PDF_ANALISE_DA_CONSULTA, P_ST_ANALISE_DA_CONSULTA, P_ID_CONSULTA); 
 END;
+
 ---
+EXEC SP_INSERT_ANALISE_DA_CONSULTA(HEXTORAW('48656C6C6F'), 'i', 5);
+---
+
 CREATE OR REPLACE PROCEDURE SP_UPDATE_ANALISE_DA_CONSULTA(
-    P_ID_ANALISE_DA_CONSULTA NUMERIC,
-    P_PDF_ANALISE_DA_CONSULTA BLOB,
-    P_ST_ANALISE_DA_CONSULTA CHAR,
-    P_ID_CONSULTA NUMERIC
-)
-AS
-BEGIN
-    UPDATE T_TC_ANALISE_DA_CONSULTA
-    SET pdf_analise_da_consulta = P_PDF_ANALISE_DA_CONSULTA,
-        st_analise_da_consulta = P_ST_ANALISE_DA_CONSULTA,
-        id_consulta = P_ID_CONSULTA
-    WHERE id_analise_da_consulta = P_ID_ANALISE_DA_CONSULTA;
+    P_ID_ANALISE_DA_CONSULTA NUMERIC, 
+    P_PDF_ANALISE_DA_CONSULTA BLOB, 
+    P_ST_ANALISE_DA_CONSULTA CHAR, 
+    P_ID_CONSULTA NUMERIC 
+) AS 
+BEGIN 
+    UPDATE T_TC_ANALISE_DA_CONSULTA 
+    SET pdf_analise_da_consulta = P_PDF_ANALISE_DA_CONSULTA, st_analise_da_consulta = P_ST_ANALISE_DA_CONSULTA, id_consulta = P_ID_CONSULTA 
+    WHERE id_analise_da_consulta = P_ID_ANALISE_DA_CONSULTA; 
 END;
+
 ---
+EXEC SP_UPDATE_ANALISE_DA_CONSULTA(6, HEXTORAW('48656C6C6F'), 'a', 5);
+---
+
+---ANALISE_DA_CONSULTA
 CREATE OR REPLACE PROCEDURE SP_DELETE_ANALISE_DA_CONSULTA(
-    P_ID_ANALISE_DA_CONSULTA NUMERIC
-)
-AS
-BEGIN
-    DELETE FROM T_TC_ANALISE_DA_CONSULTA
-    WHERE id_analise_da_consulta = P_ID_ANALISE_DA_CONSULTA;
+    P_ID_ANALISE_DA_CONSULTA NUMERIC 
+) AS 
+BEGIN 
+    DELETE FROM T_TC_ANALISE_DA_CONSULTA 
+    WHERE id_analise_da_consulta = P_ID_ANALISE_DA_CONSULTA; 
+END;
+
+---
+EXEC SP_DELETE_ANALISE_DA_CONSULTA(5);
+---
+
+---REPRESENTANTE
+CREATE OR REPLACE PROCEDURE SP_DELETE_REPRESENTANTE(
+    P_ID_REPRESENTANTE NUMERIC 
+) AS 
+BEGIN 
+    DELETE FROM T_TC_REPRESENTANTE 
+    WHERE id_representante = P_ID_REPRESENTANTE; 
+END;
+
+---
+EXEC SP_DELETE_REPRESENTANTE(6);
+---
+
+---CONSULTA
+CREATE OR REPLACE PROCEDURE SP_DELETE_CONSULTA(
+    P_ID_CONSULTA NUMERIC 
+) AS 
+BEGIN 
+    DELETE FROM T_TC_CONSULTA 
+    WHERE id_consulta = P_ID_CONSULTA; 
+END;
+
+---
+EXEC SP_DELETE_CONSULTA(6);
+---
+
+---TELEFONE_EMPRESA
+CREATE OR REPLACE PROCEDURE SP_DELETE_TELEFONE_EMPRESA(
+    P_ID_TELEFONE NUMERIC 
+) AS 
+BEGIN 
+    DELETE FROM T_TC_TELEFONE_EMPRESA 
+    WHERE id_telefone = P_ID_TELEFONE; 
 END;
 ---
+EXEC SP_DELETE_TELEFONE_EMPRESA(6);
+---
+
+---ENDERECO_EMPRESA
+CREATE OR REPLACE PROCEDURE SP_DELETE_ENDERECO_EMPRESA(
+    P_ID_ENDERECO NUMERIC 
+) AS 
+BEGIN 
+    DELETE FROM T_TC_ENDERECO_EMPRESA 
+    WHERE id_endereco = P_ID_ENDERECO; 
+END;
+
+---
+EXEC SP_DELETE_ENDERECO_EMPRESA(6);
+---
+
+---LOGIN
+CREATE OR REPLACE PROCEDURE SP_DELETE_LOGIN(
+    P_ID_LOGIN NUMERIC 
+) AS 
+BEGIN 
+    DELETE FROM T_TC_LOGIN 
+    WHERE id_login = P_ID_LOGIN; 
+END;
+
+---
+EXEC SP_DELETE_LOGIN(6);
+---
+
+---EMAIL_CONTATO
+CREATE OR REPLACE PROCEDURE SP_DELETE_EMAIL_CONTATO(
+    P_ID_EMAIL_CONTATO NUMERIC 
+) AS 
+BEGIN 
+    DELETE FROM T_TC_EMAIL_CONTATO 
+    WHERE id_email_contato = P_ID_EMAIL_CONTATO; 
+END;
+
+---
+EXEC SP_DELETE_EMAIL_CONTATO(6);
+---
+
+---CADASTRO
+CREATE OR REPLACE PROCEDURE SP_DELETE_CADASTRO(
+    P_ID_CADASTRO NUMERIC 
+) AS 
+BEGIN 
+    DELETE FROM T_TC_CADASTRO 
+    WHERE id_cadastro = P_ID_CADASTRO; 
+END;
+
+---
+EXEC SP_DELETE_CADASTRO(6);
+---
+
+SELECT * FROM T_TC_ANALISE_DA_CONSULTA;
+SELECT * FROM T_TC_CADASTRO;
+SELECT * FROM T_TC_CONSULTA;
+SELECT * FROM T_TC_EMAIL_CONTATO;
+SELECT * FROM T_TC_ENDERECO_EMPRESA;
+SELECT * FROM T_TC_LOGIN;
+SELECT * FROM T_TC_REPRESENTANTE;
+SELECT * FROM T_TC_TELEFONE_EMPRESA;
 
 ---------------------------------------------------------------------
 -------------------------PROCEDURES - JOIN---------------------------
@@ -726,11 +785,17 @@ END;
 CREATE OR REPLACE PROCEDURE proc_join_para_json IS
   l_cursor SYS_REFCURSOR;
   l_json CLOB;
+  l_dummy T_TC_CADASTRO%ROWTYPE;
 BEGIN
   OPEN l_cursor FOR
     SELECT c.id_cadastro, c.nr_cnpj, c.varchar_senha, c.nm_razaosocial
     FROM T_TC_CADASTRO c
     JOIN T_TC_EMAIL_CONTATO e ON c.id_cadastro = e.id_cadastro;
+
+  FETCH l_cursor INTO l_dummy;
+  IF l_cursor%NOTFOUND THEN
+    RAISE NO_DATA_FOUND;
+  END IF;
 
   l_json := relacional_para_json(l_cursor);
   DBMS_OUTPUT.PUT_LINE(l_json);
@@ -750,7 +815,7 @@ END;
 EXEC proc_join_para_json;
 ---
 
---- PROC TABELA ANTERIRO, ATUAL E PROXIMO
+--- PROC TABELA ANTERIOR, ATUAL E PROXIMO
 CREATE OR REPLACE PROCEDURE proc_anterior_atual_proximo IS
   CURSOR cursor_cadastro IS
     SELECT id_cadastro, nr_cnpj FROM T_TC_CADASTRO ORDER BY id_cadastro;
@@ -862,8 +927,10 @@ END;
 -----------------------------TRIGGERS--------------------------------
 
 --- Nova Table de Auditoria
+DROP SEQUENCE SEQ_AUDITORIA_CONSULTA;
+DROP TABLE T_TC_AUDITORIA_CONSULTA;
 
-CREATE TABLE T_AUDITORIA_CONSULTA (
+CREATE TABLE T_TC_AUDITORIA_CONSULTA (
     id_auditoria NUMERIC PRIMARY KEY,
     id_consulta_old NUMERIC,
     ds_consulta_old VARCHAR(80),
@@ -900,7 +967,7 @@ BEGIN
     SELECT USER INTO v_usuario FROM dual;
 
     IF INSERTING THEN
-        INSERT INTO T_AUDITORIA_CONSULTA (
+        INSERT INTO T_TC_AUDITORIA_CONSULTA (
             id_auditoria, id_consulta_new, ds_consulta_new, dt_consulta_new, blob_csv_arquivo_new, id_cadastro_new,
             usuario, operacao, data_operacao
         ) VALUES (
@@ -908,7 +975,7 @@ BEGIN
             v_usuario, 'INSERT', SYSTIMESTAMP
         );
     ELSIF UPDATING THEN
-        INSERT INTO T_AUDITORIA_CONSULTA (
+        INSERT INTO T_TC_AUDITORIA_CONSULTA (
             id_auditoria, id_consulta_old, ds_consulta_old, dt_consulta_old, blob_csv_arquivo_old, id_cadastro_old,
             id_consulta_new, ds_consulta_new, dt_consulta_new, blob_csv_arquivo_new, id_cadastro_new,
             usuario, operacao, data_operacao
@@ -918,7 +985,7 @@ BEGIN
             v_usuario, 'UPDATE', SYSTIMESTAMP
         );
     ELSIF DELETING THEN
-        INSERT INTO T_AUDITORIA_CONSULTA (
+        INSERT INTO T_TC_AUDITORIA_CONSULTA (
             id_auditoria, id_consulta_old, ds_consulta_old, dt_consulta_old, blob_csv_arquivo_old, id_cadastro_old,
             usuario, operacao, data_operacao
         ) VALUES (
@@ -937,7 +1004,7 @@ INSERT INTO T_TC_CONSULTA (id_consulta, ds_consulta, dt_consulta, blob_csv_arqui
 ---
 
 ---
-SELECT * FROM T_AUDITORIA_CONSULTA;
+SELECT * FROM T_TC_AUDITORIA_CONSULTA;
 ---
 
 ---
@@ -945,13 +1012,39 @@ UPDATE T_TC_CONSULTA SET ds_consulta = 'Consulta_2', dt_consulta = SYSDATE, blob
 ---
 
 ---
-SELECT * FROM T_AUDITORIA_CONSULTA;
+SELECT * FROM T_TC_AUDITORIA_CONSULTA;
 ---
 
+SELECT * FROM T_TC_CONSULTA;
 ---
-DELETE FROM T_TC_CONSULTA WHERE id_consulta = 2;
+DELETE FROM T_TC_ANALISE_DA_CONSULTA WHERE id_consulta = 1;
+DELETE FROM T_TC_REPRESENTANTE WHERE id_consulta = 1;
+DELETE FROM T_TC_CONSULTA WHERE id_consulta = 1;
+---
+---
+SELECT * FROM T_TC_AUDITORIA_CONSULTA;
 ---
 
+
+
+--- TESTE DE EXCEPTION ---
+DELETE FROM T_TC_ANALISE_DA_CONSULTA;
+DELETE FROM T_TC_REPRESENTANTE;
+DELETE FROM T_TC_CONSULTA;
+
+DELETE FROM T_TC_EMAIL_CONTATO;
+DELETE FROM T_TC_ENDERECO_EMPRESA;
+DELETE FROM T_TC_LOGIN;
+DELETE FROM T_TC_TELEFONE_EMPRESA;
+
+DELETE FROM T_TC_CADASTRO;
+
+set serveroutput on
+set verify off
+
+--- EXCEPTION PROC JSON
+EXEC proc_join_para_json;
 ---
-SELECT * FROM T_AUDITORIA_CONSULTA;
----
+
+
+
