@@ -921,7 +921,18 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Senha inválida');
   END IF;
 END;
-
+---
+DECLARE
+  resultado BOOLEAN;
+BEGIN
+  resultado := verifica_complexidade_senha('A');
+  
+  IF resultado THEN
+    DBMS_OUTPUT.PUT_LINE('Senha válida');
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('Senha inválida');
+  END IF;
+END;
 ---
 
 -----------------------------TRIGGERS--------------------------------
