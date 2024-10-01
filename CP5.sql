@@ -5,13 +5,12 @@
 -- Felipe Morais | RM:551463
 ---------------
 
---------------------------------DROP-------------------------------
+--------------------------------DROP--------------------------------
 
-DROP TABLE T_AT_CLIENTE;
-DROP TABLE T_AT_PACOTE;
-DROP TABLE T_AT_HOSPEDAGEN;
 DROP TABLE T_AT_RESERVA;
-
+DROP TABLE T_AT_PACOTE;
+DROP TABLE T_AT_HOSPEDAGEM;
+DROP TABLE T_AT_CLIENTE;
 --------------------------------CREATE-------------------------------
 
 CREATE TABLE T_AT_CLIENTE (
@@ -89,6 +88,70 @@ SELECT * FROM T_AT_PACOTE;
 SELECT * FROM T_AT_HOSPEDAGEM;
 SELECT * FROM T_AT_RESERVA;
 
---------------------------------FUNÇÃO-------------------------------
+----------------------CRIAÇÃO DO PACOTE------------------------------
+
 SET SERVEROUTPUT ON
 SET VERIFY OFF
+
+CREATE OR REPLACE PACKAGE PKG_GERENCIAMENTO_VIAGENS AS
+    PROCEDURE PRC_LISTAR_RESERVAS_POR_CLIENTE(p_id_cliente IN INT);
+
+    FUNCTION FUNC_CALCULAR_CUSTO_TOTAL_RESERVA(p_id_reserva IN INT) RETURN DECIMAL;
+END PKG_GERENCIAMENTO_VIAGENS;
+
+-----------------IMPLEMENTAÇÃO DO PACOTE-----------------------------
+
+CREATE OR REPLACE PACKAGE BODY PKG_GERENCIAMENTO_VIAGENS AS
+
+    PROCEDURE PRC_LISTAR_RESERVAS_POR_CLIENTE(p_id_cliente IN INT) IS
+    BEGIN
+        FOR r IN (SELECT r.id_reserva, r.dt_reserva, p.ds_descricao, h.nm_hotel FROM T_AT_RESERVA r
+                  JOIN T_AT_PACOTE p ON r.id_pacote = p.id_pacote JOIN T_AT_HOSPEDAGEM h ON r.id_hospedagem = h.id_hospedagem
+                  WHERE r.id_cliente = p_id_cliente) LOOP
+            DBMS_OUTPUT.PUT_LINE('Reserva ID: ' || r.id_reserva || ', Data: ' || r.dt_reserva || ', Pacote: ' || r.ds_descricao || ', Hotel: ' || r.nm_hotel);
+        END LOOP;
+    END PRC_LISTAR_RESERVAS_POR_CLIENTE;
+
+    FUNCTION FUNC_CALCULAR_CUSTO_TOTAL_RESERVA(p_id_reserva IN INT) RETURN DECIMAL IS
+        v_preco_pacote DECIMAL(10, 2);
+        v_diaria_hospedagem DECIMAL(10, 2);
+        v_duracao_dias INT;
+        v_custo_total DECIMAL(10, 2);
+    BEGIN
+        SELECT p.vl_preco, h.vl_diaria, p.qt_duracao_dias INTO v_preco_pacote, v_diaria_hospedagem, v_duracao_dias FROM T_AT_RESERVA r
+        JOIN T_AT_PACOTE p ON r.id_pacote = p.id_pacote JOIN T_AT_HOSPEDAGEM h ON r.id_hospedagem = h.id_hospedagem
+        WHERE r.id_reserva = p_id_reserva;
+
+        v_custo_total := v_preco_pacote + (v_diaria_hospedagem * v_duracao_dias);
+        RETURN v_custo_total;
+    END FUNC_CALCULAR_CUSTO_TOTAL_RESERVA;
+
+END PKG_GERENCIAMENTO_VIAGENS;
+
+--------------------------------TESTE--------------------------------------
+
+-- TESTE 1 PRC
+BEGIN
+    PKG_GERENCIAMENTO_VIAGENS.PRC_LISTAR_RESERVAS_POR_CLIENTE(2);
+END;
+
+-- TESTE 2 PRC
+BEGIN
+    PKG_GERENCIAMENTO_VIAGENS.PRC_LISTAR_RESERVAS_POR_CLIENTE(3);
+END;
+
+-- TESTE 1 FUNC 
+DECLARE
+    v_custo_total DECIMAL(10, 2);
+BEGIN
+    v_custo_total := PKG_GERENCIAMENTO_VIAGENS.FUNC_CALCULAR_CUSTO_TOTAL_RESERVA(1);
+    DBMS_OUTPUT.PUT_LINE('Custo total da reserva: ' || v_custo_total);
+END;
+
+-- TESTE 2 FUNC
+DECLARE
+    v_custo_total DECIMAL(10, 2);
+BEGIN
+    v_custo_total := PKG_GERENCIAMENTO_VIAGENS.FUNC_CALCULAR_CUSTO_TOTAL_RESERVA(4);
+    DBMS_OUTPUT.PUT_LINE('Custo total da reserva: ' || v_custo_total);
+END;
